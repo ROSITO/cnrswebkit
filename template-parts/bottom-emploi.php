@@ -6,11 +6,14 @@ $custom_params->where = [
     'value' => get_the_ID(),
     'compare' => '!='
 ];
-$custom_params->orederby = 'ID DESC';
+$custom_params->orderby = 'ID DESC';
 $custom_params->limit = 2;
 $emploi_data = new CnrswebkitPageItemsList('emploi', $custom_params);
 
-$liste_emploi_url= get_permalink($cnrs_global_params->field('pageliste_emploi')['ID']);
+$emploi_page = $cnrs_global_params->field('pageliste_emploi');
+$liste_emploi_url = is_array($emploi_page) && !empty($emploi_page['ID'])
+    ? get_permalink(absint($emploi_page['ID']))
+    : false;
 
 if ($liste_emploi_url) {
     $liste_emploi_url = '<a href="'. $liste_emploi_url . '">' . __('Return to recruitment list', 'cnrswebkit') . '</a>';

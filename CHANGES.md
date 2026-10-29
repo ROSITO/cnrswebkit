@@ -1,5 +1,15 @@
 #### [To appear in next release]
 
+##### Version 0.5.1
+
+ * Add PHP 8.3 compatibility by replacing removed locale/date APIs and deprecated filters.
+ * Declare list pagination properties and avoid `count()` on non-countable Pods values.
+ * Protect public AJAX actions with nonces, validation and rate limits.
+ * Prevent mail header injection and use the configured site address as sender.
+ * Replace the direct calendar export endpoint with a nonce-protected WordPress action.
+ * Generate RFC 5545 dates in UTC and escape calendar text safely.
+ * Remove JavaScript `eval()` from media popups.
+
 #### Version 0.4.3
 
  * Fix : template-parts/content-publication.php ajouté, et corrigé (c'était une copie de content-evenement.php !)

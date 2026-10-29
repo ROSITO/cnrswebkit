@@ -5,17 +5,19 @@ if ( isset($event_with_partners) && (true === $event_with_partners )  ) {
     // $current_item->value('partenaires')
     return;
 }
-$nb_partenaires = (false === $cnrs_global_params->field('partenaires_du_laboratoire')) ? 0: 
-    count($cnrs_global_params->field('partenaires_du_laboratoire'));
-    $nb_tutelles = (false === $cnrs_global_params->field('tutelles_du_laboratoire')) ? 0: 
-    count($cnrs_global_params->field('tutelles_du_laboratoire'));
+$partenaires_laboratoire = $cnrs_global_params->field('partenaires_du_laboratoire');
+$tutelles_laboratoire = $cnrs_global_params->field('tutelles_du_laboratoire');
+$partenaires_laboratoire = is_array($partenaires_laboratoire) ? $partenaires_laboratoire : array();
+$tutelles_laboratoire = is_array($tutelles_laboratoire) ? $tutelles_laboratoire : array();
+$nb_partenaires = count($partenaires_laboratoire);
+$nb_tutelles = count($tutelles_laboratoire);
 
 // TODO Faut-il utiliser les Pods pour si peu ??
 
 // Load laboratory supervisors 
 if ($nb_tutelles) {
     $tutelles = [];
-    foreach ($cnrs_global_params->field('tutelles_du_laboratoire') as $tutelle) { 
+    foreach ($tutelles_laboratoire as $tutelle) {
         $tutelles[] = $tutelle['ID'];
     }
     $custom_params = new CnrswebkitStdListParams();
@@ -30,7 +32,7 @@ if ($nb_tutelles) {
 // Load laboratory partners 
 if ($nb_partenaires) {
     $partenaires = [];
-    foreach ($cnrs_global_params->field('partenaires_du_laboratoire') as $partenaire) {
+    foreach ($partenaires_laboratoire as $partenaire) {
         $partenaires[] = $partenaire['ID'];
     }
     $custom_params = new CnrswebkitStdListParams();

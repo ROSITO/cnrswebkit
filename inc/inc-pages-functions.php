@@ -40,8 +40,13 @@ function custom_menu_page_removing() {
 add_action('admin_menu', 'custom_menu_page_removing');
 
 function cnrs_session_start() {
-    if (!session_id()) {
-        @session_start();
+    if (!session_id() && !headers_sent()) {
+        session_start(array(
+            'cookie_httponly' => true,
+            'cookie_samesite' => 'Lax',
+            'cookie_secure'   => is_ssl(),
+            'use_strict_mode' => true,
+        ));
     }
 }
 
@@ -75,9 +80,7 @@ function cnrsenqueue() {
 }
 
 function cnrswebkit_session_start() {
-    if (!session_id()) {
-        @session_start();
-    }
+    cnrs_session_start();
 }
 
 /**
@@ -422,6 +425,8 @@ class CnrswebkitStdListParams {
     public $limit = false;
     public $orderby = false;
     public $where = false;
+    public $where_replace = false;
+    public $page = false;
 
 }
 
@@ -430,6 +435,7 @@ class CnrswebkitListParams {
     public $limit = 10;
     public $orderby = 'date DESC';
     public $where = [];
+    public $page = 1;
 
     function __construct($post_type, $custom_params = false) {
         global $cnrs_global_params;
@@ -453,7 +459,7 @@ class CnrswebkitListParams {
              * account for zero date in case someone use it as default in Pods configuration
              */
             $this->where[] = "(
-                        (date_fin_publication.meta_value >='".strftime('%Y-%m-%d')."')
+                        (date_fin_publication.meta_value >='".current_time('Y-m-d')."')
                         OR (date_fin_publication.meta_value='0000-00-00')
                         OR (date_fin_publication.meta_value IS NULL) )";
             break;
@@ -468,7 +474,7 @@ class CnrswebkitListParams {
             );
             $this->where[] = array(
                 'key' => 'date_de_fin',
-                'value' => strftime('%Y-%m-%d %H:%M:%S'),
+                'value' => current_time('mysql'),
                 'compare' => '>='
             );
             $this->orderby = 'date_de_debut ASC';
@@ -502,7 +508,7 @@ class CnrswebkitListParams {
              * account for zero date in case someone use it as default in Pods configuration
              */
             $this->where[] = "( 
-                        (date_fin_publication.meta_value >='".strftime('%Y-%m-%d')."') 
+                        (date_fin_publication.meta_value >='".current_time('Y-m-d')."')
                         OR (date_fin_publication.meta_value='0000-00-00') 
                         OR (date_fin_publication.meta_value IS NULL) )";
 
@@ -618,7 +624,6 @@ class CnrswebkitPageItemsList {
         $this->custom_params = $custom_params;
         $this->post_type_params = new CnrswebkitListParams($this->post_type, $custom_params);
         $this->post_list_params = new CnrswebkitListPageParams($this->post_type); 
-        $this->limit = 
         $this->pods_data = pods($this->post_type, $this->post_type_params);
         $this->init_list();
     }
@@ -647,7 +652,7 @@ class CnrswebkitPageItemsList {
     }
 
     public function has_filters() {
-        if (count($this->post_list_params->selectors) > 0) {
+        if (count(get_object_vars($this->post_list_params->selectors)) > 0) {
             return true;
         }
         return false;
@@ -669,7 +674,7 @@ class CnrswebkitPageItemsList {
     }
 
     public function get_filters() {
-        if (count($this->post_list_params->selectors) > 0) {
+        if (count(get_object_vars($this->post_list_params->selectors)) > 0) {
             return $this->post_list_params->selectors;
         }
         return false;
@@ -677,7 +682,7 @@ class CnrswebkitPageItemsList {
 
     public function get_html_filters($area = false) {
         global $cnrs_webkit_list_filtered; 
-        if (count($this->post_list_params->selectors) > 0) {
+        if (count(get_object_vars($this->post_list_params->selectors)) > 0) {
             $filters = [];
             foreach ($this->post_list_params->selectors as $k => &$v) {
                 $filters[] = '<div>' . $v . '</div>';
@@ -717,6 +722,7 @@ class CnrswebkitPageItemsList {
                 break;
             case 'contact':
                 $previous_lettre = false;
+                $lettre_contact = isset($_SESSION['lettre_contact']) ? (string) $_SESSION['lettre_contact'] : '';
                 break;
             case 'partenaire':
                 break;
@@ -768,17 +774,17 @@ class CnrswebkitPageItemsList {
                         break;
                     case 'emploi':
                         
-                        $post_id = $this->pods_data->data->data[$iteration_number]->ID; 
-                        $type_de_poste = wp_get_post_terms($post_id, 'typologie_emploi', array("fields" => "names"));
-                        if (is_array($type_de_poste) && !empty ($type_de_poste)) {
-                            $type_de_poste = $type_de_poste[0];
-                        }
+                        $post_id = absint($current_item->value('ID'));
+                        $job_terms = wp_get_post_terms($post_id, 'typologie_emploi', array("fields" => "names"));
+                        $type_de_poste = is_array($job_terms) && !empty($job_terms) ? (string) $job_terms[0] : '';
+                        $session_type_emploi = isset($_SESSION['type_emploi']) ? (string) $_SESSION['type_emploi'] : '';
+                        $type_emploi = $session_type_emploi;
                         
-                        if (!$previous_type && $type_de_poste != $_SESSION['type_emploi']) {
+                        if (!$previous_type && $type_de_poste != $session_type_emploi) {
                             $type_emploi = $type_de_poste;
                             $display_type_line = true;
                             $previous_type = true;
-                        } else if ($type_de_poste != $type_emploi && $type_de_poste != $_SESSION['type_emploi']) {
+                        } else if ($type_de_poste != $type_emploi && $type_de_poste != $session_type_emploi) {
                             $type_emploi = $type_de_poste;
                             $display_type_line = true;
                         } else {
@@ -788,17 +794,20 @@ class CnrswebkitPageItemsList {
                         break;
                     case 'contact':
                         global $cnrs_global_params;
-                        if (!$previous_lettre && $current_item->value('nom')[0] != $_SESSION['lettre_contact']) {
-                            $lettre_contact = strtoupper($current_item->value('nom')[0]);
+                        $contact_name = (string) $current_item->value('nom');
+                        $contact_initial = '' !== $contact_name ? strtoupper(substr($contact_name, 0, 1)) : '';
+                        $session_contact_initial = isset($_SESSION['lettre_contact']) ? (string) $_SESSION['lettre_contact'] : '';
+                        if (!$previous_lettre && $contact_initial != $session_contact_initial) {
+                            $lettre_contact = $contact_initial;
                             $display_lettre_line = true;
                             $previous_lettre = true;
-                        } else if (strtoupper($current_item->value('nom')[0]) != $lettre_contact && $current_item->value('nom')[0] != $_SESSION['lettre_contact']) {
-                            $lettre_contact = strtoupper($current_item->value('nom')[0]);
+                        } else if ($contact_initial != $lettre_contact && $contact_initial != $session_contact_initial) {
+                            $lettre_contact = $contact_initial;
                             $display_lettre_line = true;
                         } else {
                             $display_lettre_line = false;
                         }
-                        $_SESSION['lettre_contact'] = $current_item->value('nom')[0];
+                        $_SESSION['lettre_contact'] = $contact_initial;
                         $custom_params = new CnrswebkitStdListParams();
                         $custom_params->limit = -1;
                         $contact_data = new CnrswebkitPageItemsList('contact', $custom_params);
@@ -854,11 +863,16 @@ class CnrswebkitBuildWhere {
 
     function __construct($metadata) {
         $ids = [];
-        if (count($metadata) > 0) {
-            foreach ($metadata as $k => &$v) {
-                $ids[] = $v["ID"];
+        if (is_array($metadata) && count($metadata) > 0) {
+            foreach ($metadata as $v) {
+                if (isset($v['ID'])) {
+                    $ids[] = absint($v['ID']);
+                }
             }
-            $this->where = 'ID IN ("' . join('","', $ids) . '")';
+            $ids = array_filter($ids);
+            if ($ids) {
+                $this->where = 'ID IN (' . join(',', $ids) . ')';
+            }
         }
     }
 
@@ -875,14 +889,17 @@ class CnrswebkitRichData {
     private $rich_data;
 
     function __construct($post_id) {
-        //TODO double affectation ligne suivante ???
-        $this->the_post = $this->the_post = get_post($post_id);
+        $post_id = absint($post_id);
+        $this->the_post = get_post($post_id);
+        if (!$this->the_post) {
+            return;
+        }
         $this->metadata = pods($this->the_post->post_type, array('where' => 't.ID = ' . $post_id));
         $this->rich_data = new CnrswebkitItemData($this->metadata, $this->the_post);
     }
 
     public function value($key) {
-        return $this->rich_data->value($key);
+        return $this->rich_data ? $this->rich_data->value($key) : false;
     }
 
     public function get_where_metadata($metadata) {
@@ -1040,53 +1057,57 @@ function get_filter_selector($post_type='', $taxonomy='', $selectorName='') {
  * Fonctions de formatage de donnée
  */
 function get_post_date($string_time, $return_type) {
-    setlocale(LC_TIME, "fr_FR");
-    if ($timestamp = strtotime($string_time)) {
+    try {
+        $date = new DateTimeImmutable($string_time, wp_timezone());
+    } catch (Exception $exception) {
+        return false;
+    }
+    if ($date) {
         switch ($return_type) {
             case 'time':
-                $format_date = '%Hh%M';
+                $format_date = 'H\\hi';
                 break;
             case 'daynumber':
-                $format_date = '%d';
+                $format_date = 'd';
                 break;
             case 'month':
-                $format_date = '%B';
+                $format_date = 'F';
                 break;
             case 'year':
-                $format_date = '%Y';
+                $format_date = 'Y';
                 break;
             case 'monthyear':
-                $format_date = '%B %Y';
+                $format_date = 'F Y';
                 break;
             case 'datesimplefirst':
-                $format_date = '%d %B';
+                $format_date = 'd F';
                 break;
             case 'datesimpleshortmonthfirst':
-                $format_date = '%d %b';
+                $format_date = 'd M';
                 break;
             case 'datesimple':
-                $format_date = '%d %B %Y';
+                $format_date = 'd F Y';
                 break;
             case 'datesimpleshortmonth':
-                $format_date = '%d %b %Y';
+                $format_date = 'd M Y';
                 break;
             case 'date':
-                $format_date = '%A %d %B %Y';
+                $format_date = 'l d F Y';
                 break;
             case 'datetimesimple':
-                $format_date = '%d %B %Y, %Hh%M';
+                $format_date = 'd F Y, H\\hi';
                 break;
             case 'datetime':
-                $format_date = '%A %d %B %Y &aacute; %Hh%M';
+                $format_date = 'l d F Y à H\\hi';
                 break;
             case 'complete':
-                $format_date = '%A %d %B %Y &aacute; %Hh%M';
+                $format_date = 'l d F Y à H\\hi';
                 break;
             default:
-                $format_date = '%A %d %B %Y &aacute; %Hh%M';
+                $format_date = 'l d F Y à H\\hi';
                 break;
         }
-        return ucfirst(utf8_encode(strftime($format_date, $timestamp)));
+        return ucfirst(wp_date($format_date, $date->getTimestamp(), wp_timezone()));
     }
     return false;
 }
@@ -1187,7 +1208,19 @@ function update_site_params($pieces, $is_new_item, $id) {
 }
 
 function get_file_size_from_url($url) {
-    return round(filesize($_SERVER['DOCUMENT_ROOT'] . parse_url($url, PHP_URL_PATH)) / 1048576, 2);
+    $document_root = isset($_SERVER['DOCUMENT_ROOT']) ? realpath(wp_unslash($_SERVER['DOCUMENT_ROOT'])) : false;
+    $url_path = parse_url($url, PHP_URL_PATH);
+    if (!$document_root || !is_string($url_path)) {
+        return 0;
+    }
+
+    $file = realpath($document_root . DIRECTORY_SEPARATOR . ltrim(rawurldecode($url_path), '/'));
+    if (!$file || 0 !== strpos($file, $document_root . DIRECTORY_SEPARATOR) || !is_file($file) || !is_readable($file)) {
+        return 0;
+    }
+
+    $size = filesize($file);
+    return false === $size ? 0 : round($size / 1048576, 2);
 }
 
 // Make cnrs_breadcrumb pluggable for possible overriding in child theme

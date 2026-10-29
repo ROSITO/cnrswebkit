@@ -20,13 +20,18 @@
         </a>
     </div>
     <a class="imageContainer" href="#<?php //echo get_permalink($current_item->value('ID'));    ?>" data-id="<?php echo $current_item->value('ID'); ?>" style="background-image:url(<?php echo get_the_post_thumbnail_url($current_item->value('ID')); ?>);"></a>
+    <?php
+    $media_image = wp_get_attachment_image_src(get_post_thumbnail_id($current_item->value('ID')), 'full', false);
+    $media_data = array(
+        'ID'         => absint($current_item->value('ID')),
+        'post_title' => (string) $current_item->value('post_title'),
+        'chapo'      => (string) $current_item->value('chapo'),
+        'credits'    => (string) $current_item->value('credits'),
+        'link'       => $media_image ? $media_image[0] : '',
+    );
+    ?>
     <script>
-        var imagepopin_<?php echo $current_item->value('ID'); ?> = {
-            ID: '<?php echo $current_item->value('ID'); ?>',
-            post_title: `<?php echo addslashes($current_item->value('post_title')); ?>`,
-            chapo: `<?php echo addslashes($current_item->value('chapo')); ?>`,
-            credits: `<?php echo addslashes($current_item->value('credits')); ?>`,
-            link: '<?php echo wp_get_attachment_image_src(get_post_thumbnail_id($current_item->value('ID')), 'full', false)[0]; ?>',
-         }
+        window.cnrswebkitMedia = window.cnrswebkitMedia || {};
+        window.cnrswebkitMedia[<?php echo wp_json_encode((string) $media_data['ID']); ?>] = <?php echo wp_json_encode($media_data); ?>;
     </script>
 </article><!-- #post-## -->

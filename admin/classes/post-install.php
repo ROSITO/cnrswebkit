@@ -8,7 +8,7 @@ Class cnrs_webkit_post_install {
     static function init() {
 
         // TODO adjust access rights
-        if (!current_user_can( 'administrator' )) {
+        if (!current_user_can( 'manage_options' )) {
             return;
         }
         
@@ -24,10 +24,11 @@ Class cnrs_webkit_post_install {
     static function settings_post_install() {
         
         // TODO adjust access rights
-        if (!current_user_can( 'administrator' )) {
+        if (!current_user_can( 'manage_options' )) {
             return;
         }
-        if (isset ($_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'settings_post_install' ) ) {
+        $nonce = isset($_POST['_wpnonce']) ? sanitize_text_field(wp_unslash($_POST['_wpnonce'])) : '';
+        if ($nonce && wp_verify_nonce($nonce, 'settings_post_install')) {
            
                 
             if (isset( $_POST['Reorder_template_settings_Pods']) ){
@@ -35,23 +36,24 @@ Class cnrs_webkit_post_install {
             }
     
             if (isset( $_POST['default_content_load']) ){
-                self::default_content_load($_POST['default_content_load']);
+                self::default_content_load(sanitize_key(wp_unslash($_POST['default_content_load'])));
             }
             
             if (isset( $_POST['Reinstall']) ){
+                $reinstall_action = sanitize_key(wp_unslash($_POST['Reinstall']));
                 
-                if ('cnrswebkit_load_cnrs_default_pods' ===$_POST['Reinstall']) {
+                if ('cnrswebkit_load_cnrs_default_pods' === $reinstall_action) {
                     cnrswebkit_load_cnrs_default_pods();
                 }
                 
-                if ('cnrswebkit_set_cnrs_template_settings_to_default' ===$_POST['Reinstall']) {
+                if ('cnrswebkit_set_cnrs_template_settings_to_default' === $reinstall_action) {
                     cnrswebkit_set_cnrs_template_settings_to_default();
                 }
                 
-                if ('force_load_pods_translations' ===$_POST['Reinstall']) {
+                if ('force_load_pods_translations' === $reinstall_action) {
                     self::load_pods_translations(true);
                 }
-                if ('load_pods_translations' ===$_POST['Reinstall']) {
+                if ('load_pods_translations' === $reinstall_action) {
                     self::load_pods_translations(false);
                 }
                 
@@ -90,7 +92,16 @@ Class cnrs_webkit_post_install {
             WP_Filesystem();
         }
         
-        $file = CNRS_WEBKIT_DIR . '/assets/content/'. $filename .'.xml';
+        $content_directory = realpath(CNRS_WEBKIT_DIR . '/assets/content');
+        $file = $content_directory ? realpath($content_directory . '/' . sanitize_file_name($filename) . '.xml') : false;
+        if (!$file || 0 !== strpos($file, $content_directory . DIRECTORY_SEPARATOR) || !is_readable($file)) {
+            $messages[] = array(
+                'message' => __('CNRS Webkit: invalid default content package.', 'cnrswebkit'),
+                'notice-level' => 'notice-error',
+            );
+            cnrsWebkitAdminNotices::addNotices($messages);
+            return;
+        }
         $WP_import->import($file);
         delete_transient ('cnrswebkit_default_content_load'.$filename);
         return;

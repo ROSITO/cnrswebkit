@@ -5,7 +5,7 @@ $custom_params->where = [
     'value' => get_the_ID(),
     'compare' => '!='
 ];
-$custom_params->orederby = 'ID DESC';
+$custom_params->orderby = 'ID DESC';
 $custom_params->limit = 3;
 $actualite_data = new CnrswebkitPageItemsList('actualite', $custom_params);
 

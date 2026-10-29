@@ -1,5 +1,9 @@
 <?php
 
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 /**
  * ICS.php
  * =======
@@ -53,7 +57,7 @@ class ICS {
         'url'
     );
 
-    public function __construct($props) {
+    public function __construct($props = array()) {
         $this->set($props);
     }
 
@@ -63,7 +67,7 @@ class ICS {
                 $this->set($k, $v);
             }
         } else {
-            if (in_array($key, $this->available_properties)) {
+            if (in_array($key, $this->available_properties, true)) {
                 $this->properties[$key] = $this->sanitize_val($val, $key);
             }
         }
@@ -90,7 +94,7 @@ class ICS {
         }
         // Set some default values
         $props['DTSTAMP'] = $this->format_timestamp('now');
-        $props['UID'] = uniqid();
+        $props['UID'] = wp_generate_uuid4();
         // Append properties
         foreach ($props as $k => $v) {
             $ics_props[] = "$k:$v";
@@ -115,12 +119,17 @@ class ICS {
     }
 
     private function format_timestamp($timestamp) {
-        $dt = new DateTime($timestamp);
+        if (!is_scalar($timestamp) || '' === trim((string) $timestamp)) {
+            throw new InvalidArgumentException('Calendar dates cannot be empty.');
+        }
+        $dt = new DateTimeImmutable($timestamp, wp_timezone());
+        $dt = $dt->setTimezone(new DateTimeZone('UTC'));
         return $dt->format(self::DT_FORMAT);
     }
 
     private function escape_string($str) {
-        return preg_replace('/([\,;])/', '\\\$1', $str);
+        $str = str_replace(array("\r\n", "\r", "\n"), '\\n', (string) $str);
+        return preg_replace('/([\\,;])/', '\\\\$1', $str);
     }
 
 }

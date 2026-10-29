@@ -10,9 +10,11 @@
 <?php
 $current_item = new CnrswebkitRichData(get_the_ID());
 $job_summary = [];
+$job_type = $current_item->value('typologie_emploi');
+$job_file = $current_item->value('fiche_de_poste_pdf');
 
-if ( isset( $current_item->value('typologie_emploi')['name']) ) {
-    $job_summary[] = $current_item->value('typologie_emploi')['name'];
+if (is_array($job_type) && isset($job_type['name'])) {
+    $job_summary[] = $job_type['name'];
 }
 if ( '' !== $current_item->value('duree_du_poste')  ) {
     $job_summary[] = $current_item->value('duree_du_poste');
@@ -31,8 +33,8 @@ if ( '' !== $current_item->value('duree_du_poste')  ) {
         </div>
         <div class="rightCol">
             <div class="contactMail"><?php echo $current_item->value('nom_contact'); ?> - <a href="#" dataid="<?php echo $current_item->value('ID'); ?>"><?php _e('Contact', 'cnrswebkit') ?></a></div>
-            <?php if ($current_item->value('fiche_de_poste_pdf')['ID'] != '') { ?>
-                <div class="ficheOffre"><a href="<?php echo wp_get_attachment_url( $current_item->value('fiche_de_poste_pdf')['ID'] ); ?>" target="_blank"><?php _e('Download recruitment offer', 'cnrswebkit') ?></a></div>
+            <?php if (is_array($job_file) && !empty($job_file['ID'])) { ?>
+                <div class="ficheOffre"><a href="<?php echo esc_url(wp_get_attachment_url(absint($job_file['ID']))); ?>" target="_blank" rel="noopener noreferrer"><?php _e('Download recruitment offer', 'cnrswebkit') ?></a></div>
             <?php } ?>
             <div class="adresseOffre"><?php echo text_to_html($current_item->value('adresse_du_poste')); ?></div>
             <?php echo get_the_post_thumbnail($current_item->value('ID'), 'cnrsloop-size'); ?>

@@ -82,7 +82,7 @@ var contactClick = function () {
         event.preventDefault();
         return false;
     });
-    
+
     $(".contactLink").unbind();
     $(".contactLink").click(function (event) {
         runAjaxQuery({
@@ -94,7 +94,7 @@ var contactClick = function () {
         event.preventDefault();
         return false;
     });
-    
+
     // close
     $(".closeContact").unbind();
     $(".closeContact").click(function () {
@@ -140,8 +140,10 @@ $(document).ready(function () {
 // Popin Mediatheque function
     $("article.mediatheque a").click(function (event) {
         var thisID = jQuery(this).attr("data-id");
-        var thisObj = eval("imagepopin_" + thisID);
-        launchMediathequePopin(thisObj);
+        var thisObj = window.cnrswebkitMedia && window.cnrswebkitMedia[thisID];
+        if (thisObj) {
+            launchMediathequePopin(thisObj);
+        }
         event.preventDefault();
         return false;
     });

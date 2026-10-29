@@ -11,9 +11,10 @@
 ?>
 <?php
 $job_summary = [];
+$job_type = $current_item->value('typologie_emploi');
 
-if ( isset($current_item->value('typologie_emploi')['name']) ) {
-    $job_summary[] = $current_item->value('typologie_emploi')['name'];
+if (is_array($job_type) && isset($job_type['name'])) {
+    $job_summary[] = $job_type['name'];
 }
 if ( '' !== $current_item->value('duree_du_poste')  ) {
     $job_summary[] = $current_item->value('duree_du_poste');

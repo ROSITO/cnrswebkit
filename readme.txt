@@ -1,8 +1,8 @@
 === CNRS Web Kit ===
 Contributors: the Atos team,Christophe Seguinot
-Requires at least: WordPress 4.4
-Tested up to: WordPress 5.2
-Version: 0.5.0
+Requires at least: WordPress 6.4
+Requires PHP: 8.1
+Version: 0.5.1
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 Theme URI: https://github.com/cnrs-webkit/cnrswebkit
@@ -14,6 +14,7 @@ This file content appears in wordpress Admin "Theme details"
 == Changelog ==
 https://github.com/cnrs-webkit/cnrswebkit/blob/master/CHANGES.md
 
+* 0.5.1: PHP 8.3 compatibility and security hardening for AJAX, email and calendar exports.
 * 0.5.0 Released May 17, 2019 by C. Seguinot: First in-line upgradable version
 * 0.3.0 Released November 2017 by Atos :CNRS-WEbKit packages v1.02 & 1.03)
 

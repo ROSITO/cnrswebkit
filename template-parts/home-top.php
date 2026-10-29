@@ -12,7 +12,10 @@
         <h3><?php echo get_bloginfo('name'); ?></h3>
         <p><?php echo $cnrs_global_params->field('presentation_du_site'); ?></p>
         <?php  
-        $page_labo_url= get_permalink($cnrs_global_params->field('page_labo')['ID']);
+        $laboratory_page = $cnrs_global_params->field('page_labo');
+        $page_labo_url = is_array($laboratory_page) && !empty($laboratory_page['ID'])
+            ? get_permalink(absint($laboratory_page['ID']))
+            : false;
         
         if ($page_labo_url) {
             echo '<div class="bottomLabo"><a href="'. $page_labo_url . '">' . __('Learn more about our laboratory &hellip;', 'cnrswebkit') . '</a></div>';

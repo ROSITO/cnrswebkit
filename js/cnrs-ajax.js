@@ -1,4 +1,4 @@
-/* 
+/*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
@@ -8,8 +8,9 @@ console.log('CNRS Ajax loaded');
 
 /* Ajax main tool */
 var runAjaxQuery = function (params) {
+    params.nonce = adminAjax.nonce;
     $.ajax({
-        url: adminAjax,
+        url: adminAjax.url,
         method: "POST",
         data: params,
         success: function (ajax_return) {
@@ -67,7 +68,7 @@ $(".moreContacts a").click(function (event) {
         target: event.target.attributes.target.value,
         page: parseInt(event.target.attributes.page.value) + 1
     });
-    
+
 });
 
 var displayEmploiForm = function (formid, target) {

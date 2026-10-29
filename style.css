@@ -10,7 +10,9 @@
  * Author:            the Atos team, Christophe Seguinot
  * Author URI:        https://atos.net/
  * Description:       CNRS Web Kit is a modernized take on an ever-popular WordPress layout — the horizontal masthead with an optional right sidebar that works perfectly for blogs and websites. It has custom color options with beautiful default color schemes, a harmonious fluid grid using a mobile-first approach, and impeccable polish in every detail. CNRS Web Kit will make your WordPress look beautiful everywhere.
- * Version:           0.5.0
+ * Version:           0.5.1
+ * Requires at least: 6.4
+ * Requires PHP:      8.1
  * License:           http://www.gnu.org/licenses/gpl-3.0.html
  * Contributors:      the Atos team (up to v 0.3), Christophe Seguinot (since v 0.4 ...)
  * Tags:              one-column, two-columns, right-sidebar, accessibility-ready, custom-background, custom-colors, custom-header, custom-menu, editor-style, featured-images, flexible-header, microformats, post-formats, rtl-language-support, sticky-post, threaded-comments, translation-ready, blog

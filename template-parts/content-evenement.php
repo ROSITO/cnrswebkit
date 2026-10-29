@@ -11,16 +11,15 @@ global $event_with_partners;
 
 $current_item = new CnrswebkitRichData(get_the_ID());
 
-$ics_form = '<form method="post" action="' . get_template_directory_uri() . '/tools/download-ics.php" class="ics-form">
-  <input type="hidden" name="date_start" value="' . mysql2date('D, d M Y H:i:s +' . str_pad(get_option('gmt_offset'), 2, '0', STR_PAD_LEFT) . '00', $current_item->value('date_de_debut'), false) . '">
-  <input type="hidden" name="date_end" value="' . mysql2date('D, d M Y H:i:s +' . str_pad(get_option('gmt_offset'), 2, '0', STR_PAD_LEFT) . '00', $current_item->value('date_de_fin'), false) . '">
-  <input type="hidden" name="location" value="' . addslashes($current_item->value('adresse_de_levenement')) . '">
-  <input type="hidden" name="description" value="' . addslashes($current_item->value('chapo')) . '">
-  <input type="hidden" name="summary" value="' . addslashes(get_the_title()) . '">
-  <input type="hidden" name="url" value="' . get_the_permalink() . '">
-  <input type="hidden" name="filename" value="' . get_post_field('post_name', get_post()) . '">
+ob_start();
+?>
+<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="ics-form">
+    <input type="hidden" name="action" value="cnrswebkit_download_ics">
+    <input type="hidden" name="post_id" value="<?php echo esc_attr(get_the_ID()); ?>">
+    <?php wp_nonce_field('cnrswebkit_ics_' . get_the_ID(), 'cnrswebkit_ics_nonce'); ?>
 </form>
-<a href="#" id="ics-vbutton">' . __('Add to calendar', 'cnrswebkit') . '</a>';
+<?php
+$ics_form = ob_get_clean();
 ?>
 <article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
     <header class="entry-header">
@@ -34,15 +33,15 @@ $ics_form = '<form method="post" action="' . get_template_directory_uri() . '/to
         </div>
         <div class="rightCol">
             <div class="eventDateRight"><?php echo get_event_dates($current_item->value('date_de_debut'), $current_item->value('date_de_fin'), 'dateeventsingle'); ?></div>
-            <div class="addCalendar"><?php echo $ics_form; ?></div>
+            <div class="addCalendar"><?php echo $ics_form; ?><a href="#" id="ics-vbutton"><?php esc_html_e('Add to calendar', 'cnrswebkit'); ?></a></div>
             <div class="eventLocation">
                 <?php
                 if (filter_var($current_item->value('lien_vers_la_carte'), FILTER_VALIDATE_URL)) {
                     ?>
-                    <a href="<?php echo $current_item->value('lien_vers_la_carte'); ?>" target="_blank"><?php echo text_to_html($current_item->value('adresse_de_levenement')); ?></a>
+                    <a href="<?php echo esc_url($current_item->value('lien_vers_la_carte')); ?>" target="_blank" rel="noopener noreferrer"><?php echo wp_kses_post(text_to_html($current_item->value('adresse_de_levenement'))); ?></a>
                     <?php
                 } else {
-                    echo text_to_html($current_item->value('adresse_de_levenement'));
+                    echo wp_kses_post(text_to_html($current_item->value('adresse_de_levenement')));
                 }
                 ?>
             </div>

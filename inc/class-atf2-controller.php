@@ -67,7 +67,9 @@ class ATF2_Controller {
 			'order'           => 'ASC',
 			'hide_empty'      => false,
 			'hide_if_empty'   => true,
-			'selected'        => filter_input( INPUT_GET, $taxonomy->query_var, FILTER_SANITIZE_STRING ),
+			'selected'        => isset( $_GET[ $taxonomy->query_var ] )
+				? sanitize_text_field( wp_unslash( $_GET[ $taxonomy->query_var ] ) )
+				: '',
 			'hierarchical'    => true,
 			'name'            => $taxonomy->query_var,
 			'taxonomy'        => $taxonomy->name,
